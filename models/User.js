@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 
 const UserSchema = mongoose.Schema({
+    firstName: {
+        type: String,
+        required: true
+    },
+    lastName: {
+        type: String,
+        required: true
+    },
     username: {
         type: String,
         required: true,
@@ -46,7 +54,8 @@ const UserSchema = mongoose.Schema({
     },
     userType: {
         type: Number,
-        enum: [1,2,3]
+        enum: [1,2,3],
+        default: 1
     },
     desc: {
         type: String,
@@ -62,11 +71,12 @@ const UserSchema = mongoose.Schema({
     },
     gender: {
         type: Number,
-        enum: [1,2]
+        enum: [1,2],
+        default: 1,
     },
     collegeName:  {
         type: String,
-        required: true
+        default: "St. John college of Engineering and Management"
     },
     course: {
         type: String,
@@ -74,7 +84,7 @@ const UserSchema = mongoose.Schema({
     },
     branch: {
         type: String,
-        required: true
+        default: ""
     },
     courseJoinYear: {
         type: Date,
@@ -82,7 +92,6 @@ const UserSchema = mongoose.Schema({
     },
     courseEndyear: {
         type: Date,
-        required: true
     }
 },
 {timestamps: true}

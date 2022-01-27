@@ -19,7 +19,7 @@ const EventSchema = mongoose.Schema({
         default: ""
     },
     scheduleDate: {
-        type: String,
+        type: Date,
         required: true
     },
     address:{

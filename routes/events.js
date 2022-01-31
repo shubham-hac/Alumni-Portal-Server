@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
 
-router.get('/', async (req,res) => {
+router.get('/all', async (req,res) => {
     try {
         const events = await Event.find();
         return res.status(200).json(events); 
@@ -19,6 +19,17 @@ router.post('/new', async (req,res) => {
         res.status(200).json(savedEvent);
     } catch (error) {
         res.status(500).json(error);
+    }
+})
+
+//Get an Event
+router.get('/', async (req,res) => {
+    const EventId = req.query.eventId;
+    try {
+        const event = await Event.findById(EventId);
+        return res.status(200).json(event);
+    } catch (error) {
+        return res.status(500).json(error);
     }
 })
 

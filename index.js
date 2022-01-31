@@ -9,6 +9,7 @@ const authRoute = require('./routes/auth');
 const eventsRoute = require('./routes/events');
 const jobsRoute = require('./routes/jobs');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 //CONSTANTS
 const port = process.env.PORT || 8080;
@@ -18,6 +19,7 @@ const db_url = process.env.DB_URL;
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
+app.use(cors());
 
 //ROUTES
 app.get('/', (req,res) => {

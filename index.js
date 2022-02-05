@@ -8,6 +8,7 @@ const userRoute = require('./routes/users');
 const authRoute = require('./routes/auth');
 const eventsRoute = require('./routes/events');
 const jobsRoute = require('./routes/jobs');
+const courseRoute = require('./routes/courses');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
@@ -30,6 +31,7 @@ app.use('/users', userRoute);
 app.use('/auth', authRoute);
 app.use('/events', eventsRoute);
 app.use('/jobs', jobsRoute);
+app.use('/courses', courseRoute);
 
 //CONNECT TO DB
 mongoose.connect(db_url, () => {

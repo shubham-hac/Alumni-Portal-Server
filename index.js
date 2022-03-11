@@ -11,16 +11,39 @@ const jobsRoute = require('./routes/jobs');
 const courseRoute = require('./routes/courses');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
 
 //CONSTANTS
 const port = process.env.PORT || 8080;
 const db_url = process.env.DB_URL;
 
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 //MIDDLEWARES
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
 app.use(cors());
+
+
+const storage = multer.diskStorage({
+    destination: (req, file,cb) => {
+        cb(null,'public/images');
+    },
+    filename: (req,file,cb) => {
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({storage});
+app.post('/upload', upload.single('file'), (req,res) => {
+    try {
+        return res.status(200).json('File uploaded successfully')
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 
 //ROUTES
 app.get('/', (req,res) => {

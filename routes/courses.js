@@ -11,6 +11,16 @@ router.get('/all', async (req,res) => {
     }
 })
 
+//get a course
+router.get('/:courseId', async (req,res) => {
+    try {
+        const course = await Course.findById(req.params.courseId);
+        res.status(200).json(course);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+})
+
 router.post('/', async (req,res) => {
     try {
         const savedCourse = await Course.create(req.body);

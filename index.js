@@ -13,7 +13,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
-
 //CONSTANTS
 const port = process.env.PORT || 8080;
 const db_url = process.env.DB_URL;
@@ -24,7 +23,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
 app.use(cors());
-
+app.set('view engine','ejs')
 
 const storage = multer.diskStorage({
     destination: (req, file,cb) => {

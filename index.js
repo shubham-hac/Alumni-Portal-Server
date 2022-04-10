@@ -13,13 +13,16 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
+const {cloudinary} = require('./utils/cloudinary')
+
 //CONSTANTS
 const port = process.env.PORT || 8080;
 const db_url = process.env.DB_URL;
 
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 //MIDDLEWARES
-app.use(express.json());
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use(helmet());
 app.use(morgan("common"));
 app.use(cors());
@@ -34,14 +37,30 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({storage});
-app.post('/upload', upload.single('file'), (req,res) => {
+// const upload = multer({storage});
+// app.post('/upload', upload.single('file'), (req,res) => {
+//     try {
+//         return res.status(200).json('File uploaded successfully')
+//     } catch (error) {
+//         console.log(error)
+//     }
+// })
+
+app.post('/upload', async (req,res) => {
     try {
-        return res.status(200).json('File uploaded successfully')
+        const fileStr = req.body.data;
+        const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+            upload_preset: 'Alumni',
+        })
+        console.log(uploadResponse);
+        res.status(200).json({msg: "Uploaded Successfully", url: uploadResponse.url})
+        // console.log(fileStr)
     } catch (error) {
         console.log(error)
+        res.status(500).json({err: 'something went wrong'})
     }
 })
+
 
 
 //ROUTES

@@ -9,6 +9,7 @@ const twilioClient = require('twilio')(process.env.TWILIO_SID,process.env.TWILIO
 const otpgen = require('otp-generator')
 const bcrypt = require('bcrypt')
 const ejs = require('ejs')
+
 router.get('/', (req,res) => {
     res.send('Auth')
 })
@@ -204,6 +205,8 @@ router.post('/verifyOTP',async (req,res)=>{
         return res.status(500).json({error:"Oops! A server error occurred!"})
     }
 })
+
+
 
 //Login Route
 router.post('/login', async (req,res) => {

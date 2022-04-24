@@ -85,7 +85,11 @@ router.post('/sendMail',async (req,res)=>{
             const otp = otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
-            const saveToken = await newToken.save() 
+            newToken.markModified('token')
+            const saveToken = await newToken.save(function(err, doc) {
+  if (err) return console.error('Error:',err);
+  console.log("Document inserted succussfully!");
+}) 
             console.log('Token saved: ',saveToken) //TODO: REMOVE DEBUG OUTPUT
             //Now send the email containing the OTP to the user's email id:
             const sendEmail = require('../utils/sendEmail')
@@ -129,11 +133,13 @@ router.post('/sendSMS',async (req,res)=>{
         }
         if(mis_record){
             //generates a cryptographically secure 6 digit long code:
-            const otp = otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
+            const otp = await otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
-            const saveToken = await newToken.save() 
-            console.log('Token saved: ',saveToken)
+            await newToken.save(function(err, doc) {
+  if (err) return console.error('Error:',err);
+  console.log("Document inserted succussfully!");
+})
             
             //Now send the SMS containing the OTP to the user's phone:
             const mobile = mis_record.mobile
@@ -181,6 +187,7 @@ router.post('/verifyOTP',async (req,res)=>{
                         lastName: mis.lname,
                         username: req.body.username,
                         password: hashedPassword,
+                        userType: mis.courseEndYear?1:0, //If the user has already ended their course,theyre an alumni[1] otherwise, they're a student [type 0]
                         email: mis.email,
                         mobile: mis.mobile,
                         course: mis.course,
@@ -189,6 +196,7 @@ router.post('/verifyOTP',async (req,res)=>{
                         birthDate: mis.birthDate,
                         courseJoinYear: mis.courseJoinYear,
                         courseEndYear: mis.courseEndYear,
+                        
                         //TODO: USERTYPE AND GENDER NEED TO BE ADDED
                     })
                     await Token.deleteOne(token)

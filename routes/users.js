@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// router.get('/', (req,res) => {
-//     res.send('user route')
-// })
-
 //get a user
 router.get('/', async (req,res) => {
     const userId = req.query.userId;
@@ -18,6 +14,22 @@ router.get('/', async (req,res) => {
         res.status(200).json(other);
     } catch (error) {
         res.status(500).json(error);
+    }
+})
+
+//Get all users based on specific filters[course/year/role etc.]
+router.post('/all',async (req,res)=>{
+    try{//TODO: INCLUDE WAYS TO PAGINATE DATA
+    //TODO: SANITIZE INCOMING REQUESTS!!This code is poorly written:
+        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,userType:1,profilePicture:1,pid:1,courseJoinYear:1,courseEndyear:1})
+        if(response.length>0){
+            res.status(200).json(response)
+            console.log('response',response)
+        }
+        else res.status(404).json({error:"No users were found which match the criteria"})
+    }catch(error){
+        console.log(error)
+        res.status(500).json({error:"Internal Server Error"})
     }
 })
 

@@ -4,7 +4,7 @@ const TokenSchema = mongoose.Schema({
     user_id:{
         type: ObjectId,
         required: true,
-        ref: 'users'
+        ref: 'mis'
     },
     token:{
         type: String,

@@ -4,7 +4,7 @@ const Event = require('../models/Event');
 
 router.get('/all', async (req,res) => {
     try {
-        const events = await Event.find();
+        const events = await Event.find().sort({_id:-1});
         return res.status(200).json(events); 
     } catch (error) {
         return res.status(500).json(error);
@@ -55,7 +55,7 @@ router.delete('/:id', async (req,res) => {
         const event = await Event.findById(req.params.id);
         console.log("\n"+req.body.userId);
         // console.log(event.userId);
-        if(event.userId === req.body.userId){
+        if(event.userId === req.body.userId || req.body.userType === 3){
             await event.deleteOne();
             return res.status(200).json('event deleted')
         }else{

@@ -45,15 +45,6 @@ router.get('/alumnis', async (req,res) => {
     }
 })
 
-//get alumni filter
-router.get('/alumnis', async (req,res) => {
-    try {
-        const alumnis = await User.find({userType: 2})
-        res.status(200).json(alumnis);
-    } catch (error) {
-        res.status(500).json(error);
-    }
-})
 
 //update user
 router.put('/:id', async (req,res) => {

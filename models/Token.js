@@ -10,10 +10,10 @@ const TokenSchema = mongoose.Schema({
         type: String,
         required: true,
     },
-    createdAt:{
+    /*createdAt:{
         type: Date,
         default: Date.now(),
-        index: {expires:'15m'}
-    }
+        //index: {expires:'15m'}
+    }*/
 }) 
 module.exports = mongoose.model('Token',TokenSchema)

@@ -46,7 +46,7 @@ router.post('/find', async (req,res)=>{
         return res.status(500).json({error:'Oops! A server error occurred!'})
     }
 })
-
+//send all the methods by which a user can verify themselves(email/phoneno.)
 router.post('/fetchMethods',async(req,res)=>{
     try{
         const pid = req.body.pid
@@ -54,8 +54,21 @@ router.post('/fetchMethods',async(req,res)=>{
         mis_record = await MIS.findOne({pid: pid})
         if(mis_record){
             const respObj={}
-            if(mis_record.email) respObj['email'] = mis_record.email
-            if(mis_record.mobile) respObj['mobile'] = mis_record.mobile
+            //Since the users is using their PID for verification,we should trust them less and send partially hidden email and phone no. values:
+            if(mis_record.email){
+                const hideEmail =(email)=>{
+                    return email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3)=>{ 
+                        for(let i = 0; i < gp3.length; i++) { 
+                            gp2+= "*"; 
+                        } return gp2; 
+                    })
+                }
+                respObj['email'] =hideEmail(mis_record.email)
+            }
+            if(mis_record.mobile){
+                const hidden_mob= mis_record.mobile.slice(0, 2) + mis_record.mobile.slice(2).replace(/.(?=...)/g, '*')
+                respObj['mobile'] = hidden_mob
+            }
             return res.status(200).json(respObj)
         }else return res.status(404).json({error:"No student/alumni was found whose data matches yours"})
     }catch(error){
@@ -149,7 +162,7 @@ router.post('/sendSMS',async (req,res)=>{
                 to:`+91${mobile}`
             })
             if(response.status=='undelivered' || response.status=='failed') return res.status(500).json({error:"SMS not sent"})
-            //This function will hide all chars in the phone no. except the first 2 digits and the domain name:
+            //This will hide some chars in the phone number:
             const hidden_mob= mobile.slice(0, 2) + mobile.slice(2).replace(/.(?=...)/g, '*')
             //If the user entered a PID, they should be trusted less and therefore should only get to see the hidden phone number:
             const responseData={mobile:isPID?hidden_mob:mobile}
@@ -177,6 +190,7 @@ router.post('/verifyOTP',async (req,res)=>{
             if(mis){
                 //Obtain the OTP sent to the mail/phone of the user with the help of their unique id:
                 const token = await Token.findOne({user_id:mis._id,token:req.body.otp})
+                print(token)
                 if(token){
                     const salt = await bcrypt.genSalt(10);
                     const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -222,6 +236,8 @@ router.post('/login', async (req,res) => {
         const user = await User.findOne({email: req.body.email});
         if(user == null)
             return res.status(404).json('User Not found');
+        if(user.banned)
+            return res.status(400).json('This user is banned from the portal')
         
         const validPassword = await bcrypt.compare(req.body.password, user.password)
         if(!validPassword)

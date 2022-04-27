@@ -24,7 +24,7 @@ router.get('/', async (req,res) => {
 router.post('/all',async (req,res)=>{
     try{//TODO: INCLUDE WAYS TO PAGINATE DATA
     //TODO: SANITIZE INCOMING REQUESTS!!This code is poorly written:
-        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,userType:1,profilePicture:1,pid:1,courseJoinYear:1,courseEndyear:1})
+        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,profilePicture:1,courseJoinYear:1,courseEndyear:1})
         if(response.length>0){
             res.status(200).json(response)
             console.log('response',response)
@@ -37,12 +37,24 @@ router.post('/all',async (req,res)=>{
 })
 
 //get alumnis
-router.get('/alumnis', async (req,res) => {
+router.post('/alumnis', async (req,res) => {
     try {
-        const alumnis = await User.find({userType: 2})
-        res.status(200).json(alumnis);
+        if(!req.body.filters){
+            const alumnis = await User.find({userType: 2})
+            res.status(200).json(alumnis);
+        }else{
+            const filters = req.body.filters
+            filters['userType'] = 2//only fetch Alumni
+            const response = await User.find(filters,{firstName:1,lastName:1,course:1,branch:1,userType:1,profilePicture:1,pid:1,courseJoinYear:1,courseEndyear:1,desc:1})
+            if(response.length>0){
+                res.status(200).json(response)
+                console.log('response',response)
+            }else res.status(404).json({error:"No users were found which match the criteria"})
+        }
+        
     } catch (error) {
-        res.status(500).json(error);
+        console.log(error)
+        res.status(500).json({error:"Oops! A server error occurred!"});
     }
 })
 

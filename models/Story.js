@@ -1,31 +1,22 @@
 const mongoose = require('mongoose');
-const ObjectId=mongoose.Schema.ObjectId
-const JobSchema = mongoose.Schema({
+
+const StorySchema = mongoose.Schema({
     userId: {
-        type: ObjectId,
+        type: String,
         required: true
     },
-    offeredRole: {
+    title: {
         type: String,
         max: 80,
         required: true
-    },
-    companyName: {
-        type: String,
-        max: 80,
-        required: true
-    },
-    deadline:{
-        type: Date,
-        // required: true
     },
     desc: {
         type: String,
         required: true,
     },
-    location:{
+    storyImage: {
         type: String,
-        required: true
+        default: ""
     },
     views: {
         type: Array,
@@ -35,4 +26,4 @@ const JobSchema = mongoose.Schema({
 {timestamps: true}
 )
 
-module.exports = mongoose.model('Job', JobSchema);
+module.exports = mongoose.model('Story', StorySchema);

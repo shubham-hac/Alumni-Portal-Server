@@ -7,6 +7,7 @@ dotenv.config();
 const userRoute = require('./routes/users');
 const authRoute = require('./routes/auth');
 const eventsRoute = require('./routes/events');
+const storiesRoute= require('./routes/stories');
 const jobsRoute = require('./routes/jobs');
 const courseRoute = require('./routes/courses');
 const mongoose = require('mongoose');
@@ -71,6 +72,7 @@ app.get('/', (req,res) => {
 app.use('/users', userRoute);
 app.use('/auth', authRoute);
 app.use('/events', eventsRoute);
+app.use('/stories', storiesRoute);
 app.use('/jobs', jobsRoute);
 app.use('/courses', courseRoute);
 

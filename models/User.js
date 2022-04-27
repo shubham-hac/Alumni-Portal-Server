@@ -96,6 +96,10 @@ const UserSchema = mongoose.Schema({
     },
     courseEndyear: {
         type: Date,
+    },
+    banned: {
+        type: Boolean,
+        default: false
     }
 },
 {timestamps: true}

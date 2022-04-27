@@ -16,6 +16,7 @@ router.get('/', async (req,res) => {
         res.status(200).json(other);
     } catch (error) {
         res.status(500).json(error);
+        console.log(error)
     }
 })
 
@@ -23,7 +24,7 @@ router.get('/', async (req,res) => {
 router.post('/all',async (req,res)=>{
     try{//TODO: INCLUDE WAYS TO PAGINATE DATA
     //TODO: SANITIZE INCOMING REQUESTS!!This code is poorly written:
-        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,userType:1,profilePicture:1,pid:1,courseJoinYear:1,courseEndyear:1})
+        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,profilePicture:1,courseJoinYear:1,courseEndyear:1})
         if(response.length>0){
             res.status(200).json(response)
             console.log('response',response)
@@ -36,12 +37,24 @@ router.post('/all',async (req,res)=>{
 })
 
 //get alumnis
-router.get('/alumnis', async (req,res) => {
+router.post('/alumnis', async (req,res) => {
     try {
-        const alumnis = await User.find({userType: 2})
-        res.status(200).json(alumnis);
+        if(!req.body.filters){
+            const alumnis = await User.find({userType: 2})
+            res.status(200).json(alumnis);
+        }else{
+            const filters = req.body.filters
+            filters['userType'] = 2//only fetch Alumni
+            const response = await User.find(filters,{firstName:1,lastName:1,course:1,branch:1,userType:1,profilePicture:1,pid:1,courseJoinYear:1,courseEndyear:1,desc:1})
+            if(response.length>0){
+                res.status(200).json(response)
+                console.log('response',response)
+            }else res.status(404).json({error:"No users were found which match the criteria"})
+        }
+        
     } catch (error) {
-        res.status(500).json(error);
+        console.log(error)
+        res.status(500).json({error:"Oops! A server error occurred!"});
     }
 })
 
@@ -129,6 +142,43 @@ router.put('/:id/unfollow', async (req,res) => {
         }
     }else{
         return res.status(403).json('Cant unfollow yourself')
+    }
+})
+//TODO: Check if the user that initiated this request is logged in and an Admin
+//Toggle the ban status of a user(ban/unban a user):
+router.put('/:id/toggleBan',async(req,res)=>{
+    try{
+        if(req.body.adminId!== req.params.id){
+            const user = await User.findById(req.params.id)
+            if(user){
+                const toggleBan = user.banned ? false : true
+                await User.updateOne({_id:req.params.id},{$set:{banned:toggleBan}})
+                return res.sendStatus(200)
+            }
+            else return res.status(404).json({error:"This user doesn't exist!"})
+        }else return res.status(403).json({error:"You can't ban yourself!"})
+    }catch(error){
+        console.log(error)
+        res.status(500).json({error:"Oops! A server error occurred!"})
+    }
+})
+//TODO: Check if the user that initiated this request is logged in and an Admin
+//Delete a user from the portal(this action is irreversible)
+router.delete('/:id/delete',async(req,res)=>{
+    try{
+        
+        if(req.body.adminId!== req.params.id){
+            const user = await User.findById(req.params.id)
+            if(user){
+                await User.deleteOne({_id:req.params.id})
+                await MIS.updateOne({pid:user.pid},{$set:{registered:false}})
+                return res.sendStatus(200)
+            }
+            else return res.status(404).json({error:"This user doesn't exist!"})
+        }else return res.status(403).json({error:"You can't delete yourself!"})
+    }catch(error){
+        console.log(error)
+        res.status(500).json({error:"Oops! A server error occurred!"})
     }
 })
 

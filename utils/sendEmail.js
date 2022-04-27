@@ -1,7 +1,7 @@
 const nodemailer= require("nodemailer")
 const dotenv = require('dotenv')
 const { render } = require("express/lib/response")
-console.log(dotenv.config({path:'.env'}))
+dotenv.config({path:'.env'})
 module.exports = async (to,subject,message)=>{
     try {
         const transporter= nodemailer.createTransport({

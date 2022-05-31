@@ -2,8 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 
-router.get('/', (req,res) => {
-    res.send('Jobs')
+router.get('/all', async (req,res) => {
+    try {
+        const events = await Job.find().sort({_id:-1});
+        return res.status(200).json(events); 
+    } catch (error) {
+        return res.status(500).json(error);
+    }
 })
 //Create Event
 router.post('/new', async (req,res) => {

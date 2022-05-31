@@ -190,7 +190,7 @@ router.post('/verifyOTP',async (req,res)=>{
             if(mis){
                 //Obtain the OTP sent to the mail/phone of the user with the help of their unique id:
                 const token = await Token.findOne({user_id:mis._id,token:req.body.otp})
-                print(token)
+                console.log(token)
                 if(token){
                     const salt = await bcrypt.genSalt(10);
                     const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -201,7 +201,7 @@ router.post('/verifyOTP',async (req,res)=>{
                         lastName: mis.lname,
                         username: req.body.username,
                         password: hashedPassword,
-                        userType: mis.courseEndYear?1:0, //If the user has already ended their course,theyre an alumni[1] otherwise, they're a student [type 0]
+                        userType: mis.courseEndYear?2:1, //If the user has already ended their course,theyre an alumni[1] otherwise, they're a student [type 0]
                         email: mis.email,
                         mobile: mis.mobile,
                         course: mis.course,

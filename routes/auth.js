@@ -98,12 +98,7 @@ router.post('/sendMail',async (req,res)=>{
             const otp = otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
-            newToken.markModified('token')
-            const saveToken = await newToken.save(function(err, doc) {
-  if (err) return console.error('Error:',err);
-  console.log("Document inserted succussfully!");
-}) 
-            console.log('Token saved: ',saveToken) //TODO: REMOVE DEBUG OUTPUT
+            const saveToken = await newToken.save()
             //Now send the email containing the OTP to the user's email id:
             const sendEmail = require('../utils/sendEmail')
             const fname = mis_record.fname
@@ -138,7 +133,6 @@ router.post('/sendSMS',async (req,res)=>{
             isPID = true
         }
         else if(req.body.mobile){
-            console.log(req.body.mobile)
             mis_record = await MIS.findOne({mobile: req.body.mobile})
         }
         else{
@@ -149,10 +143,7 @@ router.post('/sendSMS',async (req,res)=>{
             const otp = await otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
-            await newToken.save(function(err, doc) {
-  if (err) return console.error('Error:',err);
-  console.log("Document inserted succussfully!");
-})
+            await newToken.save()
             
             //Now send the SMS containing the OTP to the user's phone:
             const mobile = mis_record.mobile
@@ -186,11 +177,10 @@ router.post('/verifyOTP',async (req,res)=>{
             const searchObject = {}
             searchObject[uniqueField]=req.body[uniqueField]
             //Find the alumni/student record of the user:
-            const mis = await MIS.findOne({searchObject})
+            const mis = await MIS.findOne(searchObject)
             if(mis){
                 //Obtain the OTP sent to the mail/phone of the user with the help of their unique id:
                 const token = await Token.findOne({user_id:mis._id,token:req.body.otp})
-                console.log(token)
                 if(token){
                     const salt = await bcrypt.genSalt(10);
                     const hashedPassword = await bcrypt.hash(req.body.password, salt);

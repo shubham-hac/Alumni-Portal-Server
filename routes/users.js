@@ -24,7 +24,7 @@ router.get('/', async (req,res) => {
 router.post('/all',async (req,res)=>{
     try{//TODO: INCLUDE WAYS TO PAGINATE DATA
     //TODO: SANITIZE INCOMING REQUESTS!!This code is poorly written:
-        const response = await User.find(req.body.filters,{firstName:1,lastName:1,course:1,branch:1,profilePicture:1,courseJoinYear:1,courseEndyear:1})
+        const response = await User.find(req.body.filters,{pid:1,firstName:1,lastName:1,course:1,branch:1,profilePicture:1,courseJoinYear:1,courseEndyear:1})
         if(response.length>0){
             res.status(200).json(response)
             console.log('response',response)

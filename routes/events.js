@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+
 const Event = require('../models/Event');
 
+const noStudent = require('../middlewares/noStudent')
+const accessStatus = require('../middlewares/accessStatus')
 router.get('/all', async (req,res) => {
     try {
         const events = await Event.find().sort({_id:-1});
@@ -12,8 +15,11 @@ router.get('/all', async (req,res) => {
 })
 
 //Create Event
-router.post('/new', async (req,res) => {
-    const newEvent = new Event(req.body);
+router.post('/new',[accessStatus,noStudent],async (req,res) => {
+    //Add the user id of the user that created this event:
+    console.log(req.user._id)
+    req.body.newEvent['userId'] = req.user._id
+    const newEvent = new Event(req.body.newEvent);
     try {
         const savedEvent = await newEvent.save();
         res.status(200).json(savedEvent);
@@ -34,7 +40,7 @@ router.get('/', async (req,res) => {
 })
 
 //Update Event
-router.put('/:id', async (req,res) => {
+router.put('/:id',[accessStatus,noStudent], async (req,res) => {
     try {
         const event = await Event.findById(req.params.id);
         if(event.userId === req.body.userId){
@@ -49,7 +55,7 @@ router.put('/:id', async (req,res) => {
 })
 
 //Delete an Event
-router.delete('/:id', async (req,res) => {
+router.delete('/:id',[accessStatus,noStudent], async (req,res) => {
     try {
         
         const event = await Event.findById(req.params.id);

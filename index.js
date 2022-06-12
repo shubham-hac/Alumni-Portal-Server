@@ -1,21 +1,25 @@
 const express = require('express');
 const app = express();
+
 const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 dotenv.config();
-const userRoute = require('./routes/users');
-const authRoute = require('./routes/auth');
-const eventsRoute = require('./routes/events');
-const storiesRoute= require('./routes/stories');
-const jobsRoute = require('./routes/jobs');
-const courseRoute = require('./routes/courses');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const {cloudinary} = require('./utils/cloudinary')
 
+const userRoute = require('./routes/users');
+const authRoute = require('./routes/auth');
+const eventsRoute = require('./routes/events');
+const storiesRoute= require('./routes/stories');
+const jobsRoute = require('./routes/jobs');
+const courseRoute = require('./routes/courses');
+
+const accessStatus = require('./middlewares/accessStatus')
+const noStudent = require('./middlewares/noStudent')
 //CONSTANTS
 const port = process.env.PORT || 8080;
 const db_url = process.env.DB_URL;
@@ -46,8 +50,8 @@ const storage = multer.diskStorage({
 //         console.log(error)
 //     }
 // })
-
-app.post('/upload', async (req,res) => {
+//Upload images to cloudinary:
+app.post('/upload',[accessStatus,noStudent],async (req,res) => {
     try {
         const fileStr = req.body.data;
         const uploadResponse = await cloudinary.uploader.upload(fileStr, {

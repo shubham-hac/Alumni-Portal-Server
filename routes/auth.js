@@ -1,14 +1,21 @@
 const express = require('express');
 const router = express.Router();
+
 const dotenv = require('dotenv')
 dotenv.config({path:".env"})
-const User = require('../models/User');
-const Token = require('../models/Token')
-const MIS = require('../models/MIS')
 const twilioClient = require('twilio')(process.env.TWILIO_SID,process.env.TWILIO_AUTH_TOKEN)
 const otpgen = require('otp-generator')
 const bcrypt = require('bcrypt')
 const ejs = require('ejs')
+const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
+
+const User = require('../models/User');
+const Token = require('../models/Token')
+const MIS = require('../models/MIS')
+const RefreshToken = require('../models/RefreshToken')
+
+const accessStatus = require('../middlewares/accessStatus')
 
 router.get('/', (req,res) => {
     res.send('Auth')
@@ -218,24 +225,87 @@ router.post('/verifyOTP',async (req,res)=>{
     }
 })
 
-
-
 //Login Route
 router.post('/login', async (req,res) => {
     try {
+        //TODO: Allow user login via phone number
+        //Find the user in the db:
         const user = await User.findOne({email: req.body.email});
         if(user == null)
             return res.status(404).json('User Not found');
         if(user.banned)
             return res.status(400).json('This user is banned from the portal')
-        
+
+        //Check whether hash of the provided password matches the hash stored in db:
         const validPassword = await bcrypt.compare(req.body.password, user.password)
         if(!validPassword)
             return res.status(400).json('Wrong Password');
+        //Create an object that includes some details of the user that need to be accessed frequently on the client side:
+        user_obj = {
+            _id:user._id,
+            userType:user.userType,
+            username:user.username,
+            firstName:user.firstName,
+            middleName:user.middleName,
+            lastName:user.lastName,
+            profilePicture: user.profilePicture
+        }
+        //Create access and refresh tokens for the user:
+        const accessToken = jwt.sign(user_obj,process.env.ACCESS_KEY,{expiresIn:'15m'})
+        const refreshToken = jwt.sign(user_obj,process.env.REFRESH_KEY)
         
-        return res.status(200).json(user);
+        //Store the refresh token in the database:
+        reftoken= await new RefreshToken({refresh_token:refreshToken})
+        await reftoken.save()
+        
+        //Send the tokens back to the client
+        res.status(200).json({accessToken:accessToken,refreshToken:refreshToken})
     } catch (error) {
         console.log(error)
+        return res.status(500).json({error:"Oops! A server error occurred!"})
+    }
+})
+
+//Issues a new access token when the old one expires:
+router.post('/newToken',async (req,res)=>{
+    //Check if the user provided the refresh token:
+    const refreshToken = req.body.refreshToken
+    if(!refreshToken) return res.status(401).json({error:"Refresh token not provided"})
+    
+    //Check if this refreshToken exists in our database:
+    const reftoken = await RefreshToken.findOne({refresh_token:refreshToken})
+    if(!reftoken) return res.status(403).json({error:"Invalid refresh token"})
+    
+    //Verify the refresh token:
+    jwt.verify(refreshToken,process.env.REFRESH_KEY,(err,user)=>{
+        if(err){
+            console.log(err)
+            return res.status(403).json({error:"Invalid refresh token"})
+        }
+        //Remove the iat key from the user object(since it wasn't a part of the original payload,just the time at which the previous token was issued):
+        delete user.iat
+        //If the token is valid,generate a new access token and send it to the user:
+        const accessToken  = jwt.sign(user,process.env.ACCESS_KEY,{expiresIn:'15m'})
+        return res.status(200).json({accessToken:accessToken})
+    })
+    
+    
+})
+
+//Logout Route
+router.post('/logout',async (req,res)=>{
+    try{
+        //Check if the refreshToken is included in the request body
+        if(req.body.refreshToken){
+            //Delete the refreshToken from our database, effectively logging out the user:
+            await RefreshToken.deleteOne({refresh_token:req.body.refreshToken})
+            return res.sendStatus(200)
+        }
+        //Return an error if the user doesn't provide a refreshToken:
+        return res.status(400).json({error:"Refresh token not provided"})
+    }catch(error){
+        console.log(error)
+        return res.status(500).json({error:"Oops! A server error occurred!"})
     }
 })
 

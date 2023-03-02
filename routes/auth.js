@@ -64,10 +64,10 @@ router.post('/fetchMethods',async(req,res)=>{
             //Since the users is using their PID for verification,we should trust them less and send partially hidden email and phone no. values:
             if(mis_record.email){
                 const hideEmail =(email)=>{
-                    return email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3)=>{ 
-                        for(let i = 0; i < gp3.length; i++) { 
-                            gp2+= "*"; 
-                        } return gp2; 
+                    return email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3)=>{
+                        for(let i = 0; i < gp3.length; i++) {
+                            gp2+= "*";
+                        } return gp2;
                     })
                 }
                 respObj['email'] =hideEmail(mis_record.email)
@@ -105,17 +105,17 @@ router.post('/sendMail',async (req,res)=>{
             const otp = otpgen.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
-            const saveToken = await newToken.save()
+            await newToken.save()
             //Now send the email containing the OTP to the user's email id:
             const sendEmail = require('../utils/sendEmail')
             const fname = mis_record.fname
             await sendEmail(mis_record.email,"Verify your email address",ejs.renderFile('./templates/verifyEmail.ejs',{fname,otp}))
             //This function will hide all chars in the email address except the first 2 digits and the domain name:
             const hideEmail =(email)=>{
-                return email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3)=>{ 
-                    for(let i = 0; i < gp3.length; i++) { 
-                    gp2+= "*"; 
-                    } return gp2; 
+                return email.replace(/(.{2})(.*)(?=@)/, (gp1, gp2, gp3)=>{
+                    for(let i = 0; i < gp3.length; i++) {
+                    gp2+= "*";
+                    } return gp2;
                 })
             }
             //If the user entered a PID, they should be trusted less and therefore should only get to see the hidden email address:
@@ -127,7 +127,7 @@ router.post('/sendMail',async (req,res)=>{
     }catch(error){
         console.log(error)
         return res.status(500).json({error:"Oops! A server error occurred!"})
-    }  
+    }
 })
 
 //Generates a Cryptographically Secure Pseudo Random Number OTP and sends it to the user via SMS:
@@ -151,7 +151,7 @@ router.post('/sendSMS',async (req,res)=>{
             //Store the OTP in DB:
             const newToken = await new Token({user_id: mis_record._id,token: otp})
             await newToken.save()
-            
+
             //Now send the SMS containing the OTP to the user's phone:
             const mobile = mis_record.mobile
             const response = await twilioClient.messages.create({
@@ -171,13 +171,14 @@ router.post('/sendSMS',async (req,res)=>{
     }catch(error){
         console.log(error)
         return res.status(500).json({error:"Oops! A server error occurred!"})
-    }  
+    }
 })
 
 //Verifies the OTP sent via phone or mail:
 router.post('/verifyOTP',async (req,res)=>{
     try{
     const uniqueField = [Object.keys(req.body)[0]]
+    console.log(req.body)
     //If the very first field in the request object was modified by the attacker,there is a chance of leaking the existence of a particular user/user's PII.
         //So ensure the first field is one of these:
         if(uniqueField=='email' || uniqueField=='mobile' || uniqueField=='pid'){
@@ -187,14 +188,17 @@ router.post('/verifyOTP',async (req,res)=>{
             const mis = await MIS.findOne(searchObject)
             if(mis){
                 //Obtain the OTP sent to the mail/phone of the user with the help of their unique id:
+
+                console.log(mis._id, req.body.otp)
                 const token = await Token.findOne({user_id:mis._id,token:req.body.otp})
+                console.log(token)
                 if(token){
                     const salt = await bcrypt.genSalt(10);
                     const hashedPassword = await bcrypt.hash(req.body.password, salt);
                     const user = await new User({
                         pid: mis.pid,
                         firstName: mis.fname,
-                        middleName: mis.mname,
+                        // middleName: mis.mname,
                         lastName: mis.lname,
                         username: req.body.username,
                         password: hashedPassword,
@@ -207,7 +211,7 @@ router.post('/verifyOTP',async (req,res)=>{
                         birthDate: mis.birthDate,
                         courseJoinYear: mis.courseJoinYear,
                         courseEndYear: mis.courseEndYear,
-                        
+
                         //TODO: USERTYPE AND GENDER NEED TO BE ADDED
                     })
                     await Token.deleteOne(token)
@@ -253,11 +257,11 @@ router.post('/login', async (req,res) => {
         //Create access and refresh tokens for the user:
         const accessToken = jwt.sign(user_obj,process.env.ACCESS_KEY,{expiresIn:'15m'})
         const refreshToken = jwt.sign(user_obj,process.env.REFRESH_KEY)
-        
+
         //Store the refresh token in the database:
         reftoken= await new RefreshToken({refresh_token:refreshToken})
         await reftoken.save()
-        
+
         //Send the tokens back to the client
         res.status(200).json({accessToken:accessToken,refreshToken:refreshToken})
     } catch (error) {
@@ -271,11 +275,11 @@ router.post('/newToken',async (req,res)=>{
     //Check if the user provided the refresh token:
     const refreshToken = req.body.refreshToken
     if(!refreshToken) return res.status(401).json({error:"Refresh token not provided"})
-    
+
     //Check if this refreshToken exists in our database:
     const reftoken = await RefreshToken.findOne({refresh_token:refreshToken})
     if(!reftoken) return res.status(403).json({error:"Invalid refresh token"})
-    
+
     //Verify the refresh token:
     jwt.verify(refreshToken,process.env.REFRESH_KEY,(err,user)=>{
         if(err){
@@ -288,8 +292,8 @@ router.post('/newToken',async (req,res)=>{
         const accessToken  = jwt.sign(user,process.env.ACCESS_KEY,{expiresIn:'15m'})
         return res.status(200).json({accessToken:accessToken})
     })
-    
-    
+
+
 })
 
 //Logout Route

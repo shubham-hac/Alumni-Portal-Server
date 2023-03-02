@@ -7,7 +7,7 @@ const UserSchema = mongoose.Schema({
     },
     middleName:{
         type: String,
-        required: true
+        // required: true
     },
     lastName: {
         type: String,
@@ -84,7 +84,7 @@ const UserSchema = mongoose.Schema({
     },
     course: {
         type: String,
-        required: true,
+        // required: true,
     },
     branch: {
         type: String,
@@ -92,7 +92,7 @@ const UserSchema = mongoose.Schema({
     },
     courseJoinYear: {
         type: Date,
-        required: true
+        // required: true
     },
     courseEndyear: {
         type: Date,
